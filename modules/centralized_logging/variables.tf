@@ -21,6 +21,30 @@ variable "cloudtrail_log_group_name" {
   default     = "cloudtrail"
 }
 
+variable "cloudwatch_schedule_expression" {
+  description = "CloudWatch event rule schedule expression that determines when the centralized-logging lambda will run"
+  type        = string
+  default     = "cron(0 0 * * ? *)"
+}
+
+variable "firehose_delivery_stream_buffer_size" {
+  description = "Buffer incoming data to the specified size, in MBs, before delivering it to the destination"
+  type        = number
+  default     = 5
+}
+
+variable "firehose_delivery_stream_buffer_interval" {
+  description = "Buffer incoming data to the specified size, in MBs, before delivering it to the destination"
+  type        = number
+  default     = 300
+}
+
+variable "firehose_delivery_stream_compression_format" {
+  description = "The compression format. Some options: 'UNCOMPRESSED', 'GZIP', 'ZIP', 'Snappy', 'HADOOP_SNAPPY'"
+  type        = string
+  default     = "GZIP"
+}
+
 variable "firehose_log_group_name" {
   description = "Name of log group that the firehose delivery stream will log errors to"
   type        = string

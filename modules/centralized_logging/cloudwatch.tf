@@ -51,13 +51,25 @@ resource "aws_cloudwatch_event_rule" "cloudwatch_log_group_create" {
 EOF
 }
 
+resource "aws_cloudwatch_event_rule" "lambda_cron" {
+  name                = "lambda-centralized-logging-cron-${local.region}"
+  description         = "Periodic trigger for the centralized-logging lambda"
+  schedule_expression = var.cloudwatch_schedule_expression
+}
+
 ##########
 # Cloudwatch Event Target
 ##########
 
 resource "aws_cloudwatch_event_target" "cloudwatch_log_group_create" {
-  target_id = "cloudwatch-log-group-creation"
+  target_id = "cloudwatch-log-group-creation-${local.region}"
   rule      = aws_cloudwatch_event_rule.cloudwatch_log_group_create.name
+  arn       = aws_lambda_function.cloudwatch_logging.arn
+}
+
+resource "aws_cloudwatch_event_target" "lambda_cron" {
+  target_id = "lambda-centralized-logging-cron-${local.region}"
+  rule      = aws_cloudwatch_event_rule.lambda_cron.name
   arn       = aws_lambda_function.cloudwatch_logging.arn
 }
 
