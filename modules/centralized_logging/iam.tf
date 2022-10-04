@@ -52,6 +52,11 @@ data "aws_iam_policy_document" "kinesis_firehose_assume_role" {
       identifiers = ["firehose.amazonaws.com"]
     }
     actions = ["sts:AssumeRole"]
+    condition {
+      test     = "StringEquals"
+      variable = "sts:ExternalId"
+      values   = [local.account_id]
+    }
   }
 }
 
@@ -107,10 +112,16 @@ data "aws_iam_policy_document" "kinesis_firehose_s3_logging" {
 
 data "aws_iam_policy_document" "lambda_assume_role" {
   statement {
+    sid     = "LambdaAssumeRole"
     actions = ["sts:AssumeRole"]
     principals {
       type        = "Service"
       identifiers = ["lambda.amazonaws.com"]
+    }
+    condition {
+      test     = "StringLike"
+      variable = "aws:SourceArn"
+      values   = ["arn:aws:lambda:${local.region}:${local.account_id}:*"]
     }
   }
 }
