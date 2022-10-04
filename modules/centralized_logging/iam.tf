@@ -171,6 +171,7 @@ resource "aws_iam_role" "kinesis_firehose_s3_logging" {
 resource "aws_iam_role" "lambda_cloudwatch_logging" {
   name               = "lambda-cloudwatch-logging-${local.region}"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+  description        = "IAM role used by centralized-logging lambda"
 }
 
 ##########

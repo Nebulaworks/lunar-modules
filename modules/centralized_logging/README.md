@@ -1,7 +1,10 @@
 <!-- BEGIN_TF_DOCS -->
 ## Centralized-Logging Module
 
-This module creates resources that will forward CloudWatch log group logs in an account to a central s3 bucket via Kinesis Firehose.
+This module defines resources that enable forwarding of CloudWatch logs (via log groups) within a given account to a central s3 logging bucket. This module is intended to be instantiated in each region.
+Log forwarding is achieved via Lambda, CloudWatch, and Kinesis Firehose. A kinesis firehose delivery stream is created with its destination set to an s3 logging bucket of your choice. A lambda function is also created
+that creates subscription filters for every log group in your account (except for any cloudtrail log groups). Each subscription filter is configured to foward logs to the delivery stream mentioned above. Any event that gets logged
+to a log group will be forwarded to the delivery stream which will then forward the logs to the s3 logging bucket.
 
 ## Requirements
 
@@ -58,9 +61,13 @@ This module creates resources that will forward CloudWatch log group logs in an 
 | <a name="input_cloudtrail_log_group_name"></a> [cloudtrail\_log\_group\_name](#input\_cloudtrail\_log\_group\_name) | Name of log group that a regional cloudtrail writes to | `string` | `"cloudtrail"` | no |
 | <a name="input_cloudwatch_schedule_expression"></a> [cloudwatch\_schedule\_expression](#input\_cloudwatch\_schedule\_expression) | CloudWatch event rule schedule expression that determines when the centralized-logging lambda will run | `string` | `"cron(0 0 * * ? *)"` | no |
 | <a name="input_env"></a> [env](#input\_env) | Name of the environment | `string` | `"dev"` | no |
+| <a name="input_firehose_delivery_stream_buffer_interval"></a> [firehose\_delivery\_stream\_buffer\_interval](#input\_firehose\_delivery\_stream\_buffer\_interval) | Buffer incoming data to the specified size, in MBs, before delivering it to the destination | `number` | `300` | no |
+| <a name="input_firehose_delivery_stream_buffer_size"></a> [firehose\_delivery\_stream\_buffer\_size](#input\_firehose\_delivery\_stream\_buffer\_size) | Buffer incoming data to the specified size, in MBs, before delivering it to the destination | `number` | `5` | no |
+| <a name="input_firehose_delivery_stream_compression_format"></a> [firehose\_delivery\_stream\_compression\_format](#input\_firehose\_delivery\_stream\_compression\_format) | The compression format. Some options: 'UNCOMPRESSED', 'GZIP', 'ZIP', 'Snappy', 'HADOOP\_SNAPPY' | `string` | `"GZIP"` | no |
+| <a name="input_firehose_delivery_stream_s3_prefix"></a> [firehose\_delivery\_stream\_s3\_prefix](#input\_firehose\_delivery\_stream\_s3\_prefix) | (optional) : The 'YYYY/MM/DD/HH' time format prefix is automatically used for delivered S3 files. You can specify an extra prefix to be added in front of the time format prefix. Note that if the prefix ends with a slash, it appears as a folder in the S3 bucket. <br>  Default prefix defined in data.tf: '<env>/<account\_id>/cloudwatch-logs/' | `string` | `""` | no |
 | <a name="input_firehose_log_group_name"></a> [firehose\_log\_group\_name](#input\_firehose\_log\_group\_name) | Name of log group that the firehose delivery stream will log errors to | `string` | `""` | no |
 | <a name="input_firehose_log_group_retention"></a> [firehose\_log\_group\_retention](#input\_firehose\_log\_group\_retention) | Number of days to retain logs for the firehose error log group | `number` | `180` | no |
-| <a name="input_lambda_config"></a> [lambda\_config](#input\_lambda\_config) | Map of lambda configuration options | `object{}` See variables.tf for attributes | n/a | yes |
+| <a name="input_lambda_config"></a> [lambda\_config](#input\_lambda\_config) | Map of lambda configuration options | `object()` See [variables.tf](variables.tf) for attributes | n/a | yes |
 | <a name="input_lambda_log_group_name"></a> [lambda\_log\_group\_name](#input\_lambda\_log\_group\_name) | Name of log group that the central logging lambda will log to | `string` | `""` | no |
 | <a name="input_lambda_log_group_retention"></a> [lambda\_log\_group\_retention](#input\_lambda\_log\_group\_retention) | Number of days to retain logs for the lambda log group | `number` | `180` | no |
 | <a name="input_s3_logging_bucket"></a> [s3\_logging\_bucket](#input\_s3\_logging\_bucket) | Name of s3 logging bucket | `string` | n/a | yes |
@@ -69,5 +76,10 @@ This module creates resources that will forward CloudWatch log group logs in an 
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_cloudwatch_logs_kinesis_firehose_logging_role_arn"></a> [cloudwatch\_logs\_kinesis\_firehose\_logging\_role\_arn](#output\_cloudwatch\_logs\_kinesis\_firehose\_logging\_role\_arn) | ARN of IAM role used by CloudWatch logs subscription filter to forward logs to Kinesis Data Firhose Delivery stream |
+| <a name="output_kinesis_firehose_s3_logging_role_arn"></a> [kinesis\_firehose\_s3\_logging\_role\_arn](#output\_kinesis\_firehose\_s3\_logging\_role\_arn) | ARN of IAM role used by Kinesis Firehose delivery stream to push objects to the s3 logging bucket |
+| <a name="output_lambda_cloudwatch_logging_errors_sns_topic"></a> [lambda\_cloudwatch\_logging\_errors\_sns\_topic](#output\_lambda\_cloudwatch\_logging\_errors\_sns\_topic) | ARN of SNS topic for centralized-logging lambda errors |
+| <a name="output_lambda_cloudwatch_logging_role_arn"></a> [lambda\_cloudwatch\_logging\_role\_arn](#output\_lambda\_cloudwatch\_logging\_role\_arn) | ARN of IAM role used by centralized-logging lamdba |
 <!-- END_TF_DOCS -->

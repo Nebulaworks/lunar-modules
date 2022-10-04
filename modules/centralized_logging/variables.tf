@@ -45,6 +45,15 @@ variable "firehose_delivery_stream_compression_format" {
   default     = "GZIP"
 }
 
+variable "firehose_delivery_stream_s3_prefix" {
+  description = <<EOT
+  (optional) : The 'YYYY/MM/DD/HH' time format prefix is automatically used for delivered S3 files. You can specify an extra prefix to be added in front of the time format prefix. Note that if the prefix ends with a slash, it appears as a folder in the S3 bucket. 
+  Default prefix defined in data.tf: '<env>/<account_id>/cloudwatch-logs/'
+  EOT
+  type        = string
+  default     = ""
+}
+
 variable "firehose_log_group_name" {
   description = "Name of log group that the firehose delivery stream will log errors to"
   type        = string
