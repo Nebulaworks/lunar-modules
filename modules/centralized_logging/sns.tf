@@ -1,4 +1,4 @@
 resource "aws_sns_topic" "lambda_cloudwatch_logging_errors" {
-  name         = "cloudwatch-logging-lambda-errors-${local.region}"
-  display_name = "cloudwatch-logging-lambda-errors-${local.region}"
+  name         = "centralized-logging-lambda-errors-${local.region}"
+  display_name = "centralized-logging-lambda-errors-${local.region}"
 }

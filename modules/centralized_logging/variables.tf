@@ -21,6 +21,43 @@ variable "cloudtrail_log_group_name" {
   default     = "cloudtrail"
 }
 
+variable "cloudwatch_schedule_expression" {
+  description = "CloudWatch event rule schedule expression that determines when the centralized-logging lambda will run"
+  type        = string
+  default     = "cron(0 0 * * ? *)"
+}
+
+variable "firehose_delivery_stream_buffer_size" {
+  description = "Buffer incoming data to the specified size, in MBs, before delivering it to the destination"
+  type        = number
+  default     = 5
+}
+
+variable "firehose_delivery_stream_buffer_interval" {
+  description = "Buffer incoming data to the specified size, in MBs, before delivering it to the destination"
+  type        = number
+  default     = 300
+}
+
+variable "firehose_delivery_stream_compression_format" {
+  description = "The compression format. Some options: 'UNCOMPRESSED', 'GZIP', 'ZIP', 'Snappy', 'HADOOP_SNAPPY'"
+  type        = string
+  default     = "UNCOMPRESSED"
+  validation {
+    condition     = contains(["UNCOMPRESSED", "GZIP", "ZIP", "Snappy", "HADOOP_SNAPPY"], var.firehose_delivery_stream_compression_format)
+    error_message = "The compression format must be one of the following: 'UNCOMPRESSED', 'GZIP', 'ZIP', 'Snappy', 'HADOOP_SNAPPY'"
+  }
+}
+
+variable "firehose_delivery_stream_s3_prefix" {
+  description = <<EOT
+  (optional) : The 'YYYY/MM/DD/HH' time format prefix is automatically used for delivered S3 files. You can specify an extra prefix to be added in front of the time format prefix. Note that if the prefix ends with a slash, it appears as a folder in the S3 bucket. 
+  Default prefix defined in data.tf: '<env>/<account_id>/cloudwatch-logs/'
+  EOT
+  type        = string
+  default     = ""
+}
+
 variable "firehose_log_group_name" {
   description = "Name of log group that the firehose delivery stream will log errors to"
   type        = string

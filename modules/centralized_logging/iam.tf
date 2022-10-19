@@ -12,9 +12,14 @@ data "aws_iam_policy_document" "cloudwatch_logs_assume_role" {
     effect = "Allow"
     principals {
       type        = "Service"
-      identifiers = ["logs.amazonaws.com"]
+      identifiers = ["logs.${local.region}.amazonaws.com"]
     }
     actions = ["sts:AssumeRole"]
+    condition {
+      test     = "StringLike"
+      variable = "aws:SourceArn"
+      values   = ["arn:aws:logs:${local.region}:${local.account_id}:*"]
+    }
   }
 }
 
@@ -25,6 +30,7 @@ data "aws_iam_policy_document" "cloudwatch_logs_kinesis_firehose_logging" {
     sid    = "CloudWatchWriteKinesisDataFirehose"
     effect = "Allow"
     actions = [
+      "firehose:DescribeDeliveryStream",
       "firehose:PutRecord",
       "firehose:PutRecordBatch"
     ]
@@ -46,6 +52,11 @@ data "aws_iam_policy_document" "kinesis_firehose_assume_role" {
       identifiers = ["firehose.amazonaws.com"]
     }
     actions = ["sts:AssumeRole"]
+    condition {
+      test     = "StringEquals"
+      variable = "sts:ExternalId"
+      values   = [local.account_id]
+    }
   }
 }
 
@@ -101,10 +112,16 @@ data "aws_iam_policy_document" "kinesis_firehose_s3_logging" {
 
 data "aws_iam_policy_document" "lambda_assume_role" {
   statement {
+    sid     = "LambdaAssumeRole"
     actions = ["sts:AssumeRole"]
     principals {
       type        = "Service"
       identifiers = ["lambda.amazonaws.com"]
+    }
+    condition {
+      test     = "StringLike"
+      variable = "aws:SourceArn"
+      values   = ["arn:aws:lambda:${local.region}:${local.account_id}:*"]
     }
   }
 }
@@ -147,7 +164,7 @@ data "aws_iam_policy_document" "lambda_cloudwatch_logging" {
 ##### CloudWatch Logs
 
 resource "aws_iam_role" "cloudwatch_logs_kinesis_firehose_logging" {
-  name               = "cloudwatch-logs-kinesis-firehose-logging-${data.aws_region.current.name}"
+  name               = "cloudwatch-logs-kinesis-firehose-logging-${local.region}"
   assume_role_policy = data.aws_iam_policy_document.cloudwatch_logs_assume_role.json
   description        = "IAM role used by CloudWatch logs subscription filter to foward logs to Kinesis Data Firehose Delivery stream"
 }
@@ -155,7 +172,7 @@ resource "aws_iam_role" "cloudwatch_logs_kinesis_firehose_logging" {
 ##### Kinesis Data Firehose
 
 resource "aws_iam_role" "kinesis_firehose_s3_logging" {
-  name               = "kinesis-firehose-s3-logging-${data.aws_region.current.name}"
+  name               = "kinesis-firehose-s3-logging-${local.region}"
   assume_role_policy = data.aws_iam_policy_document.kinesis_firehose_assume_role.json
   description        = "IAM role used by Kinesis Firehose delivery stream to push objects to the s3 logging bucket"
 }
@@ -163,8 +180,9 @@ resource "aws_iam_role" "kinesis_firehose_s3_logging" {
 #### Lambda
 
 resource "aws_iam_role" "lambda_cloudwatch_logging" {
-  name               = "lambda-cloudwatch-logging-${data.aws_region.current.name}"
+  name               = "lambda-cloudwatch-logging-${local.region}"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+  description        = "IAM role used by centralized-logging lambda"
 }
 
 ##########
@@ -174,7 +192,7 @@ resource "aws_iam_role" "lambda_cloudwatch_logging" {
 ##### Cloudwatch Logs
 
 resource "aws_iam_policy" "cloudwatch_logs_kinesis_firehose_logging" {
-  name        = "cloudwatch-logs-kinesis-rw-${data.aws_region.current.name}"
+  name        = "cloudwatch-logs-kinesis-rw-${local.region}"
   description = "Allows Cloudwatch logs to write to a Kinesis Firehose Delivery stream"
   policy      = data.aws_iam_policy_document.cloudwatch_logs_kinesis_firehose_logging.json
 }
@@ -182,7 +200,7 @@ resource "aws_iam_policy" "cloudwatch_logs_kinesis_firehose_logging" {
 ##### Kinesis Data Firehose
 
 resource "aws_iam_policy" "kinesis_firehose_s3_logging" {
-  name        = "kinesis-firehose-s3-logging-${data.aws_region.current.name}"
+  name        = "kinesis-firehose-s3-logging-${local.region}"
   description = "Allows Kinesis Data Firehose to read/write logs to s3 logging bucket"
   policy      = data.aws_iam_policy_document.kinesis_firehose_s3_logging.json
 }
@@ -190,7 +208,7 @@ resource "aws_iam_policy" "kinesis_firehose_s3_logging" {
 #### Lambda
 
 resource "aws_iam_policy" "lambda_cloudwatch_logging" {
-  name        = "lambda-cloudwatch-logging-${data.aws_region.current.name}"
+  name        = "lambda-cloudwatch-logging-${local.region}"
   description = "Allows AWS lambda to create cloduwatch subscription filters, log to cloudwatch and read Firehose delivery stream info"
   policy      = data.aws_iam_policy_document.lambda_cloudwatch_logging.json
 }

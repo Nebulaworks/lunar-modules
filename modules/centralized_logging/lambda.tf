@@ -39,3 +39,11 @@ resource "aws_lambda_permission" "cloudwatch_log_create" {
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.cloudwatch_log_group_create.arn
 }
+
+resource "aws_lambda_permission" "cloudwatch_lambda_cron" {
+  statement_id  = "cloudwatch-lambda-cron"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.cloudwatch_logging.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.lambda_cron.arn
+}
