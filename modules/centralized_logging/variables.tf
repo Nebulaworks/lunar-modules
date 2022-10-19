@@ -42,7 +42,11 @@ variable "firehose_delivery_stream_buffer_interval" {
 variable "firehose_delivery_stream_compression_format" {
   description = "The compression format. Some options: 'UNCOMPRESSED', 'GZIP', 'ZIP', 'Snappy', 'HADOOP_SNAPPY'"
   type        = string
-  default     = "GZIP"
+  default     = "UNCOMPRESSED"
+  validation {
+    condition     = contains(["UNCOMPRESSED", "GZIP", "ZIP", "Snappy", "HADOOP_SNAPPY"], var.firehose_delivery_stream_compression_format)
+    error_message = "The compression format must be one of the following: 'UNCOMPRESSED', 'GZIP', 'ZIP', 'Snappy', 'HADOOP_SNAPPY'"
+  }
 }
 
 variable "firehose_delivery_stream_s3_prefix" {
